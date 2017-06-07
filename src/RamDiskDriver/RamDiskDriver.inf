@@ -1,0 +1,91 @@
+;
+; RamDiskDriver.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Sample ; TODO: edit Class
+ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171} ; TODO: edit ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=RamDiskDriver.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=SampleClassReg
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+RamDiskDriver.sys  = 1,,
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%RamDiskDriver.DeviceDesc%=RamDiskDriver_Device, Root\RamDiskDriver ; TODO: edit hw-id
+
+[RamDiskDriver_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+RamDiskDriver.sys
+
+;-------------- Service installation
+[RamDiskDriver_Device.NT.Services]
+AddService = RamDiskDriver,%SPSVCINST_ASSOCSERVICE%, RamDiskDriver_Service_Inst
+
+; -------------- RamDiskDriver driver install sections
+[RamDiskDriver_Service_Inst]
+DisplayName    = %RamDiskDriver.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\RamDiskDriver.sys
+LoadOrderGroup = Extended Base
+
+;
+;--- RamDiskDriver_Device Coinstaller installation ------
+;
+
+[DestinationDirs]
+RamDiskDriver_Device_CoInstaller_CopyFiles = 11
+
+[RamDiskDriver_Device.NT.CoInstallers]
+AddReg=RamDiskDriver_Device_CoInstaller_AddReg
+CopyFiles=RamDiskDriver_Device_CoInstaller_CopyFiles
+
+[RamDiskDriver_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[RamDiskDriver_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[SourceDisksFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+[RamDiskDriver_Device.NT.Wdf]
+KmdfService =  RamDiskDriver, RamDiskDriver_wdfsect
+[RamDiskDriver_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="" ; TODO: add ManufacturerName
+ClassName="Samples" ; TODO: edit ClassName
+DiskName = "RamDiskDriver Installation Disk"
+RamDiskDriver.DeviceDesc = "RamDiskDriver Device"
+RamDiskDriver.SVCDESC = "RamDiskDriver Service"
