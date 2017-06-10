@@ -21,7 +21,7 @@ Environment:
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
 #pragma alloc_text (PAGE, RamDiskDriverEvtDeviceAdd)
-#pragma alloc_text (PAGE, RamDiskDriverEvtDriverContextCleanup)
+//#pragma alloc_text (PAGE, RamDiskDriverEvtDriverContextCleanup)
 #endif
 
 
@@ -58,38 +58,39 @@ Return Value:
 {
     WDF_DRIVER_CONFIG config;
     NTSTATUS status;
-    WDF_OBJECT_ATTRIBUTES attributes;
+    //WDF_OBJECT_ATTRIBUTES attributes;
 
     //
     // Initialize WPP Tracing
     //
-    WPP_INIT_TRACING( DriverObject, RegistryPath );
+    //WPP_INIT_TRACING( DriverObject, RegistryPath );
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
 
     //
     // Register a cleanup callback so that we can call WPP_CLEANUP when
     // the framework driver object is deleted during driver unload.
     //
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
+    //WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    //attributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
 
     WDF_DRIVER_CONFIG_INIT(&config, RamDiskDriverEvtDeviceAdd);
+    //config.DriverInitFlags = 1;
 
     status = WdfDriverCreate(DriverObject,
                              RegistryPath,
-                             &attributes,
+                             WDF_NO_OBJECT_ATTRIBUTES,
                              &config,
                              WDF_NO_HANDLE
                              );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
-        WPP_CLEANUP(DriverObject);
+        //TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
+        //WPP_CLEANUP(DriverObject);
         return status;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
+    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 
     return status;
 }
@@ -122,42 +123,42 @@ Return Value:
     UNREFERENCED_PARAMETER(Driver);
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
 
     status = RamDiskDriverCreateDevice(DeviceInit);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
+    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 
     return status;
 }
 
-VOID
-RamDiskDriverEvtDriverContextCleanup(
-    _In_ WDFOBJECT DriverObject
-    )
-/*++
-Routine Description:
-
-    Free all the resources allocated in DriverEntry.
-
-Arguments:
-
-    DriverObject - handle to a WDF Driver object.
-
-Return Value:
-
-    VOID.
-
---*/
-{
-    UNREFERENCED_PARAMETER(DriverObject);
-
-    PAGED_CODE ();
-
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
-
-    //
-    // Stop WPP Tracing
-    //
-    WPP_CLEANUP( WdfDriverWdmGetDriverObject(DriverObject) );
-}
+//VOID
+//RamDiskDriverEvtDriverContextCleanup(
+//    _In_ WDFOBJECT DriverObject
+//    )
+///*++
+//Routine Description:
+//
+//    Free all the resources allocated in DriverEntry.
+//
+//Arguments:
+//
+//    DriverObject - handle to a WDF Driver object.
+//
+//Return Value:
+//
+//    VOID.
+//
+//--*/
+//{
+//    UNREFERENCED_PARAMETER(DriverObject);
+//
+//    PAGED_CODE ();
+//
+//    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+//
+//    //
+//    // Stop WPP Tracing
+//    //
+//    WPP_CLEANUP( WdfDriverWdmGetDriverObject(DriverObject) );
+//}

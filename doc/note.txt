@@ -1,0 +1,2 @@
+1.¥Îdevcon¦w¸Ë
+devcon install RamDiskDriver.inf RamDisk

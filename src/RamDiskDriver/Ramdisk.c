@@ -21,10 +21,14 @@ NTSTATUS RegisterRamdiskDeviceName(WDFDEVICE device, PWDFDEVICE_INIT devinit)
     if(NT_SUCCESS(status))
         status = WdfDeviceCreateSymbolicLink(device, &dos_name);
     else
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceInitAssignName() failed [%!STATUS!]", status);
+        KdPrint(("WdfDeviceInitAssignName() failed 0x%08X", status));
+
+        //TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceInitAssignName() failed [%!STATUS!]", status);
     
     if (!NT_SUCCESS(status))
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceCreateSymbolicLink() failed [%!STATUS!]", status);
+        KdPrint(("WdfDeviceCreateSymbolicLink() failed 0x%08X", status));
+
+        //TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDeviceCreateSymbolicLink() failed [%!STATUS!]", status);
     return status;
 }
 
@@ -34,11 +38,12 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     SMOKYDISK_SETTING setting = {0};
     
     LoadSetting(&setting);
-
-    devext->DiskMemory = ExAllocatePoolWithTag(PagedPool, setting.DiskSize.QuadPart, MY_POOLTAG);
+    SIZE_T size = (SIZE_T)setting.DiskSize.QuadPart;
+    devext->DiskMemory = ExAllocatePoolWithTag(PagedPool, size, MY_POOLTAG);
     if (NULL == devext->DiskMemory)
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "ExAllocatePoolWithTag() failed");
+        KdPrint(("ExAllocatePoolWithTag() failed 0x%08X", status));
+        //TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "ExAllocatePoolWithTag() failed");
         return STATUS_MEMORY_NOT_ALLOCATED;
     }
     devext->DiskSize.QuadPart = setting.DiskSize.QuadPart;

@@ -31,5 +31,5 @@ Environment:
 
 DRIVER_INITIALIZE DriverEntry;
 EVT_WDF_DRIVER_DEVICE_ADD RamDiskDriverEvtDeviceAdd;
-EVT_WDF_OBJECT_CONTEXT_CLEANUP RamDiskDriverEvtDriverContextCleanup;
+//EVT_WDF_OBJECT_CONTEXT_CLEANUP RamDiskDriverEvtDriverContextCleanup;
 
