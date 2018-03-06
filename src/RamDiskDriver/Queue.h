@@ -39,6 +39,4 @@ RamDiskDriverQueueInitialize(
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL RamDiskDriverEvtIoDeviceControl;
 EVT_WDF_IO_QUEUE_IO_READ RamDiskDriverEvtIoRead;
 EVT_WDF_IO_QUEUE_IO_WRITE RamDiskDriverEvtIoWrite;
-
-//Pure software driver don't have to handle power state...
-//EVT_WDF_IO_QUEUE_IO_STOP RamDiskDriverEvtIoStop;
+EVT_WDF_IO_QUEUE_IO_STOP RamDiskDriverEvtIoStop;

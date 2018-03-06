@@ -55,7 +55,7 @@ Return Value:
     WdfDeviceInitSetIoType(DeviceInit, WdfDeviceIoDirect);
     WdfDeviceInitSetExclusive(DeviceInit, FALSE);
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_EXTENSION);
-    //deviceAttributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
+    deviceAttributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
     DECLARE_CONST_UNICODE_STRING(nt_name, NT_DEVICE_NAME);
     DECLARE_CONST_UNICODE_STRING(dos_name, DOS_DEVICE_NAME);
 

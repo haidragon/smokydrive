@@ -21,7 +21,7 @@ Environment:
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
 #pragma alloc_text (PAGE, RamDiskDriverEvtDeviceAdd)
-//#pragma alloc_text (PAGE, RamDiskDriverEvtDriverContextCleanup)
+#pragma alloc_text (PAGE, RamDiskDriverEvtDriverContextCleanup)
 #endif
 
 
@@ -132,10 +132,10 @@ Return Value:
     return status;
 }
 
-//VOID
-//RamDiskDriverEvtDriverContextCleanup(
-//    _In_ WDFOBJECT DriverObject
-//    )
+VOID
+RamDiskDriverEvtDriverContextCleanup(
+    _In_ WDFOBJECT DriverObject
+    )
 ///*++
 //Routine Description:
 //
@@ -150,15 +150,15 @@ Return Value:
 //    VOID.
 //
 //--*/
-//{
-//    UNREFERENCED_PARAMETER(DriverObject);
-//
-//    PAGED_CODE ();
-//
-//    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
-//
-//    //
-//    // Stop WPP Tracing
-//    //
-//    WPP_CLEANUP( WdfDriverWdmGetDriverObject(DriverObject) );
-//}
+{
+    UNREFERENCED_PARAMETER(DriverObject);
+
+    PAGED_CODE ();
+
+    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+
+    //
+    // Stop WPP Tracing
+    //
+    //WPP_CLEANUP( WdfDriverWdmGetDriverObject(DriverObject) );
+}

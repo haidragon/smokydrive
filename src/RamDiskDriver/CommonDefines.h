@@ -4,7 +4,7 @@
 #define RAMDISK_NAME                    L"SmokyDisk" 
 #define DRIVE_LETTER_LEN    16
 #define NT_DEVICE_NAME                  L"\\Device\\SmokyDisk"
-#define DOS_DEVICE_NAME                 L"\\DosDevices\\Z:"
+#define DOS_DEVICE_NAME                 L"\\DosDevices\\Global\\Z:"
 #define MY_POOLTAG                     'YKMS'  // => "SMKY"
 
 #define BYTES_PER_SECTOR            4096

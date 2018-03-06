@@ -1,5 +1,5 @@
-;
 ; RamDiskDriver.inf
+;
 ;
 
 [Version]
@@ -36,7 +36,7 @@ RamDiskDriver.sys  = 1,,
 %ManufacturerName%=Standard,NT$ARCH$
 
 [Standard.NT$ARCH$]
-%RamDiskDriver.DeviceDesc%=DefaultInstall, RamDisk ; TODO: edit hw-id
+%RamDiskDriver.DeviceDesc%=DefaultInstall , RamDisk ; TODO: edit hw-id
 
 [DefaultInstall.NT]
 CopyFiles=Drivers_Dir
@@ -84,8 +84,8 @@ KmdfLibraryVersion = $KMDFVERSION$
 
 [Strings]
 SPSVCINST_ASSOCSERVICE= 0x00000002
-ManufacturerName="" ; TODO: add ManufacturerName
-ClassName="Samples" ; TODO: edit ClassName
+ManufacturerName="Roy Wang" ; TODO: add ManufacturerName
+ClassName="RamDisk" ; TODO: edit ClassName
 DiskName = "RamDiskDriver Installation Disk"
 RamDiskDriver.DeviceDesc = "RamDiskDriver Device"
 RamDiskDriver.SVCDESC = "RamDiskDriver Service"
