@@ -18,6 +18,7 @@ Environment:
 
 #include <ntddk.h>
 #include <wdf.h>
+#include <wdmsec.h> // for SDDLs
 
 #include "device.h"
 #include "queue.h"
@@ -30,6 +31,6 @@ Environment:
 //
 
 DRIVER_INITIALIZE DriverEntry;
-EVT_WDF_DRIVER_DEVICE_ADD RamDiskDriverEvtDeviceAdd;
+//EVT_WDF_DRIVER_DEVICE_ADD RamDiskDriverEvtDeviceAdd;
 EVT_WDF_OBJECT_CONTEXT_CLEANUP RamDiskDriverEvtDriverContextCleanup;
-
+EVT_WDF_DRIVER_UNLOAD RamdiskDriverUnload;

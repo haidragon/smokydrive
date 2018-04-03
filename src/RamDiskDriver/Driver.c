@@ -20,8 +20,9 @@ Environment:
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
-#pragma alloc_text (PAGE, RamDiskDriverEvtDeviceAdd)
+//#pragma alloc_text (PAGE, RamDiskDriverEvtDeviceAdd)
 #pragma alloc_text (PAGE, RamDiskDriverEvtDriverContextCleanup)
+#pragma alloc_text (PAGE, RamdiskDriverUnload)
 #endif
 
 
@@ -58,6 +59,7 @@ Return Value:
 {
     WDF_DRIVER_CONFIG config;
     NTSTATUS status;
+    WDFDRIVER hDriver;
     //WDF_OBJECT_ATTRIBUTES attributes;
 
     //
@@ -74,14 +76,16 @@ Return Value:
     //WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     //attributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
 
-    WDF_DRIVER_CONFIG_INIT(&config, RamDiskDriverEvtDeviceAdd);
-    //config.DriverInitFlags = 1;
+    /*WDF_DRIVER_CONFIG_INIT(&config, RamDiskDriverEvtDeviceAdd);*/
+    WDF_DRIVER_CONFIG_INIT(&config, NULL);
+    config.DriverInitFlags = WdfDriverInitNonPnpDriver;
+    config.EvtDriverUnload = RamdiskDriverUnload;
 
     status = WdfDriverCreate(DriverObject,
                              RegistryPath,
                              WDF_NO_OBJECT_ATTRIBUTES,
                              &config,
-                             WDF_NO_HANDLE
+                             &hDriver
                              );
 
     if (!NT_SUCCESS(status)) {
@@ -91,46 +95,57 @@ Return Value:
     }
 
     //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
-
-    return status;
-}
-
-NTSTATUS
-RamDiskDriverEvtDeviceAdd(
-    _In_    WDFDRIVER       Driver,
-    _Inout_ PWDFDEVICE_INIT DeviceInit
-    )
-/*++
-Routine Description:
-
-    EvtDeviceAdd is called by the framework in response to AddDevice
-    call from the PnP manager. We create and initialize a device object to
-    represent a new instance of the device.
-
-Arguments:
-
-    Driver - Handle to a framework driver object created in DriverEntry
-
-    DeviceInit - Pointer to a framework-allocated WDFDEVICE_INIT structure.
-
-Return Value:
-
-    NTSTATUS
-
---*/
-{
-    NTSTATUS status;
-    UNREFERENCED_PARAMETER(Driver);
-    PAGED_CODE();
-
-    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
-
+    //PWDFDEVICE_INIT DeviceInit;
+    
+    //SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R 應該是內建const....
+    PWDFDEVICE_INIT DeviceInit = WdfControlDeviceInitAllocate(hDriver, &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R);
     status = RamDiskDriverCreateDevice(DeviceInit);
-
-    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
-
     return status;
 }
+
+//NTSTATUS
+//RamDiskDriverEvtDeviceAdd(
+//    _In_    WDFDRIVER       Driver,
+//    _Inout_ PWDFDEVICE_INIT DeviceInit
+//    )
+///*++
+//Routine Description:
+//
+//    EvtDeviceAdd is called by the framework in response to AddDevice
+//    call from the PnP manager. We create and initialize a device object to
+//    represent a new instance of the device.
+//
+//Arguments:
+//
+//    Driver - Handle to a framework driver object created in DriverEntry
+//
+//    DeviceInit - Pointer to a framework-allocated WDFDEVICE_INIT structure.
+//
+//Return Value:
+//
+//    NTSTATUS
+//
+//--*/
+//{
+//    NTSTATUS status;
+//    UNREFERENCED_PARAMETER(Driver);
+//    PAGED_CODE();
+//
+//    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+//
+//    status = RamDiskDriverCreateDevice(DeviceInit);
+//
+//    //TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
+//
+//    return status;
+//}
+
+VOID RamdiskDriverUnload(WDFDRIVER   pDriverObject)
+{
+    UNREFERENCED_PARAMETER(pDriverObject);
+    PAGED_CODE();
+}
+
 
 VOID
 RamDiskDriverEvtDriverContextCleanup(
