@@ -40,3 +40,4 @@ EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL RamDiskDriverEvtIoDeviceControl;
 EVT_WDF_IO_QUEUE_IO_READ RamDiskDriverEvtIoRead;
 EVT_WDF_IO_QUEUE_IO_WRITE RamDiskDriverEvtIoWrite;
 EVT_WDF_IO_QUEUE_IO_STOP RamDiskDriverEvtIoStop;
+

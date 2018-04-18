@@ -13,7 +13,8 @@
 #define CYLINDERS                   64
 
 //default 1GB
-#define DEFAULT_DISK_SIZE           CYLINDERS*TRACKS_PER_CYLINDER*SECTORS_PER_TRACK*BYTES_PER_SECTOR
+//#define DEFAULT_DISK_SIZE           CYLINDERS*TRACKS_PER_CYLINDER*SECTORS_PER_TRACK*BYTES_PER_SECTOR
+#define DEFAULT_DISK_SIZE           1048576*256
 
 //devExt->DiskGeometry.SectorsPerTrack = 32;     // Using Ramdisk value
 //devExt->DiskGeometry.TracksPerCylinder = 2;    // Using Ramdisk value

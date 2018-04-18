@@ -1,22 +1,17 @@
 ; RamDiskDriver.inf
 ;
-; Installation Notes:
-;
-;     Using Devcon: Type "devcon install ramdisk.inf Ramdisk" to install
 ;
 
 [Version]
 Signature="$WINDOWS NT$"
-;need a class installer if set class to custom name
-Class=Sample
-ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171}
+Class=RamDisk ; TODO: edit Class
+ClassGuid={CC124EFE-84FB-4C45-A66F-86229DA781F9} ; TODO: edit ClassGuid
 Provider=%ManufacturerName%
 CatalogFile=RamDiskDriver.cat
-DriverVer= 04/01/2018,1.00.1000.1
+DriverVer= ; TODO: set DriverVer in stampinf property pages
 
 [DestinationDirs]
 DefaultDestDir = 12
-DiskInstall_CoInstaller_CopyFiles = 11
 
 ; ================= Class section =====================
 
@@ -28,35 +23,33 @@ HKR,,,0,%ClassName%
 HKR,,Icon,,-5
 
 [SourceDisksNames]
-1 = %DiskName%,
+1 = %DiskName%,,,""
 
 [SourceDisksFiles]
-RamDiskDriver.sys  = 1
+RamDiskDriver.sys  = 1,,
 
 ;*****************************************
 ; Install Section
 ;*****************************************
 
 [Manufacturer]
-%ManufacturerName%=DiskDevice,NTx86,NTAMD64
+%ManufacturerName%=Standard,NT$ARCH$
 
-[DiskDevice.NTx86]
-%RamDiskDriver.DeviceDesc%=DiskInstall, SmokyDrive ; TODO: edit hw-id
-[DiskDevice.NTAMD64]
-%RamDiskDriver.DeviceDesc%=DiskInstall, SmokyDrive ; TODO: edit hw-id
+[Standard.NT$ARCH$]
+%RamDiskDriver.DeviceDesc%=DefaultInstall , RamDisk ; TODO: edit hw-id
 
-[DiskInstall.NT]
-CopyFiles=DiskCopyfiles
+[DefaultInstall.NT]
+CopyFiles=Drivers_Dir
 
-[DiskCopyfiles]
+[Drivers_Dir]
 RamDiskDriver.sys
 
 ;-------------- Service installation
-[DiskInstall.NT.Services]
-AddService = %ServiceName%,%SPSVCINST_ASSOCSERVICE%,RamDiskDriver.Service
+[DefaultInstall.NT.Services]
+AddService = RamDisk,%SPSVCINST_ASSOCSERVICE%, RamDiskDriver_Service_Inst
 
 ; -------------- RamDiskDriver driver install sections
-[RamDiskDriver.Service]
+[RamDiskDriver_Service_Inst]
 DisplayName    = %RamDiskDriver.SVCDESC%
 ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
 StartType      = 3               ; SERVICE_DEMAND_START
@@ -68,33 +61,31 @@ ServiceBinary  = %12%\RamDiskDriver.sys
 ;--- DefaultInstall Coinstaller installation ------
 ;
 
-;[DestinationDirs]
-;DiskInstall_CoInstaller_CopyFiles = 11
+[DestinationDirs]
+DefaultInstall_CoInstaller_CopyFiles = 11
 
-[DiskInstall.NT.CoInstallers]
-AddReg=DiskInstall_CoInstaller_AddReg
-CopyFiles=DiskInstall_CoInstaller_CopyFiles
+[DefaultInstall.NT.CoInstallers]
+AddReg=DefaultInstall_CoInstaller_AddReg
+CopyFiles=DefaultInstall_CoInstaller_CopyFiles
 
-[DiskInstall_CoInstaller_AddReg]
+[DefaultInstall_CoInstaller_AddReg]
 HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
 
-[DiskInstall_CoInstaller_CopyFiles]
+[DefaultInstall_CoInstaller_CopyFiles]
 WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
 
 [SourceDisksFiles]
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
 
-[DiskInstall.NT.Wdf]
-KmdfService =  %ServiceName%, RamDiskDriver_wdfsect
-
+[DefaultInstall.NT.Wdf]
+KmdfService =  RamDiskDriver, RamDiskDriver_wdfsect
 [RamDiskDriver_wdfsect]
 KmdfLibraryVersion = $KMDFVERSION$
 
 [Strings]
 SPSVCINST_ASSOCSERVICE= 0x00000002
-ManufacturerName="RoyWang" 
-ClassName="RamDisk" 
+ManufacturerName="Roy Wang" ; TODO: add ManufacturerName
+ClassName="RamDisk" ; TODO: edit ClassName
 DiskName = "RamDiskDriver Installation Disk"
 RamDiskDriver.DeviceDesc = "RamDiskDriver Device"
 RamDiskDriver.SVCDESC = "RamDiskDriver Service"
-ServiceName = "SmokyDrive"

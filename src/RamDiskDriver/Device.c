@@ -26,23 +26,6 @@ NTSTATUS
 RamDiskDriverCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     )
-/*++
-
-Routine Description:
-
-    Worker routine called to create a device and its software resources.
-
-Arguments:
-
-    DeviceInit - Pointer to an opaque init structure. Memory for this
-                    structure will be freed by the framework when the WdfDeviceCreate
-                    succeeds. So don't access the structure after that point.
-
-Return Value:
-
-    NTSTATUS
-
---*/
 {
     WDF_OBJECT_ATTRIBUTES   deviceAttributes;
     PDEVICE_EXTENSION devext;
@@ -51,23 +34,24 @@ Return Value:
 
     PAGED_CODE();
 
-    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_DISK);
-    WdfDeviceInitSetIoType(DeviceInit, WdfDeviceIoDirect);
-    WdfDeviceInitSetExclusive(DeviceInit, FALSE);
-    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_EXTENSION);
-    deviceAttributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
     DECLARE_CONST_UNICODE_STRING(nt_name, NT_DEVICE_NAME);
-    DECLARE_CONST_UNICODE_STRING(dos_name, DOS_DEVICE_NAME);
-
+    //DECLARE_CONST_UNICODE_STRING(dos_name, DOS_DEVICE_NAME);
     status = WdfDeviceInitAssignName(DeviceInit, &nt_name);
     if (!NT_SUCCESS(status))
         return status;
+
+    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_DISK);
+    WdfDeviceInitSetIoType(DeviceInit, WdfDeviceIoDirect);
+    WdfDeviceInitSetExclusive(DeviceInit, FALSE);
+
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_EXTENSION);
+    deviceAttributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
 
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
     if (!NT_SUCCESS(status))
         return status;
 
-    status = WdfDeviceCreateSymbolicLink(device, &dos_name);
+    //status = WdfDeviceCreateSymbolicLink(device, &dos_name);
     devext = DeviceGetExtension(device);
     status = InitDeviceExtension(devext);
 

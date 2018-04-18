@@ -328,6 +328,8 @@
     <VerifyFlags>133563</VerifyFlags>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <TimeStampServer>http://timestamp.globalsign.com/scripts/timstamp.dll</TimeStampServer>
+    <DiagnosticMode>true</DiagnosticMode>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>

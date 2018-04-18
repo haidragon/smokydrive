@@ -39,7 +39,7 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     
     LoadSetting(&setting);
     SIZE_T size = (SIZE_T)setting.DiskSize.QuadPart;
-    devext->DiskMemory = ExAllocatePoolWithTag(PagedPool, size, MY_POOLTAG);
+    devext->DiskMemory = ExAllocatePoolWithTag(NonPagedPool, size, MY_POOLTAG);
     if (NULL == devext->DiskMemory)
     {
         KdPrint(("ExAllocatePoolWithTag() failed 0x%08X", status));
@@ -62,11 +62,11 @@ void LoadSetting(PSMOKYDISK_SETTING setting)
 
     //DiskSize == BytesPerSector * SectorsPerTrack * TracksPerCylinder * Cylinders
     //Here we determine Cylinders by DiskTotalSize.
-    setting->Geometry.Cylinders.QuadPart = 
-                    setting->DiskSize.QuadPart 
-                            / setting->Geometry.TracksPerCylinder 
-                            / setting->Geometry.SectorsPerTrack 
-                            / setting->Geometry.BytesPerSector;
+    //setting->Geometry.Cylinders.QuadPart = 
+    //                setting->DiskSize.QuadPart 
+    //                        / setting->Geometry.TracksPerCylinder 
+    //                        / setting->Geometry.SectorsPerTrack 
+    //                        / setting->Geometry.BytesPerSector;
 }
 
 BOOLEAN IsValidIoParams(

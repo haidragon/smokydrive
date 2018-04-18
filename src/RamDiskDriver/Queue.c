@@ -1,19 +1,3 @@
-/*++
-
-Module Name:
-
-    queue.c
-
-Abstract:
-
-    This file contains the queue entry points and callbacks.
-
-Environment:
-
-    Kernel-mode Driver Framework
-
---*/
-
 #include "driver.h"
 #include "queue.tmh"
 
@@ -25,32 +9,11 @@ NTSTATUS
 RamDiskDriverQueueInitialize(
     _In_ WDFDEVICE Device
     )
-/*++
-
-Routine Description:
-
-
-     The I/O dispatch callbacks for the frameworks device object
-     are configured in this function.
-
-     A single default I/O Queue is configured for parallel request
-     processing, and a driver context memory allocation is created
-     to hold our structure QUEUE_CONTEXT.
-
-Arguments:
-
-    Device - Handle to a framework device object.
-
-Return Value:
-
-    VOID
-
---*/
 {
     WDFQUEUE queue;
     NTSTATUS status;
     WDF_IO_QUEUE_CONFIG    queueConfig;
-
+    WDF_OBJECT_ATTRIBUTES  queue_attr;
     PAGED_CODE();
     
     //
@@ -67,18 +30,25 @@ Return Value:
     queueConfig.EvtIoRead = RamDiskDriverEvtIoRead;
     queueConfig.EvtIoWrite = RamDiskDriverEvtIoWrite;
 
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&queue_attr, QUEUE_CONTEXT);
+
     status = WdfIoQueueCreate(
                  Device,
                  &queueConfig,
-                 WDF_NO_OBJECT_ATTRIBUTES,
+                 &queue_attr,
                  &queue
                  );
 
     if( !NT_SUCCESS(status) ) {
         KdPrint(("WdfIoQueueCreate() failed 0x%08X", status));
-        //TraceEvents(TRACE_LEVEL_ERROR, TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
         return status;
     }
+    
+    PQUEUE_CONTEXT ctx = NULL;
+    ctx = QueueGetContext(queue);
+    ctx->Device = Device;
+    PDEVICE_EXTENSION devext = DeviceGetExtension(Device);
+    ctx->DevExt = devext;
 
     return status;
 }
@@ -116,16 +86,17 @@ Return Value:
 
 --*/
 {
-    //TraceEvents(TRACE_LEVEL_INFORMATION, 
-    //            TRACE_QUEUE, 
-    //            "!FUNC! Queue 0x%p, Request 0x%p OutputBufferLength %d InputBufferLength %d IoControlCode %d", 
-    //            Queue, Request, (int) OutputBufferLength, (int) InputBufferLength, IoControlCode);
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
     WdfRequestComplete(Request, STATUS_SUCCESS);
-
+    //IOCTL_DISK_GET_PARTITION_INFO
+    IOCTL_CODE code = {0};
+    code.Value = IoControlCode;
+    DbgPrint("IOCTL code[0x08X]: Type=0x08X, Function=0x08X, Access=0x08X, Method=0x08X\r\n", 
+            IoControlCode, code.Fields.DeviceType, code.Fields.Function, 
+            code.Fields.Access, code.Fields.Method);
     return;
 }
 

@@ -179,6 +179,7 @@
     <DriverType>KMDF</DriverType>
     <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
     <KMDF_VERSION_MINOR>9</KMDF_VERSION_MINOR>
+    <ALLOW_DATE_TIME>1</ALLOW_DATE_TIME>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
@@ -201,61 +202,75 @@
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
+    <TimeStampServer>http://timestamp.globalsign.com/scripts/timstamp.dll</TimeStampServer>
+    <DiagnosticMode>true</DiagnosticMode>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</OutDir>
     <IntDir>$(ProjectDir)$(Platform)\$(ConfigurationName)\</IntDir>
+    <DisableProductionSignDebugWarnings>true</DisableProductionSignDebugWarnings>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|Win32'">
     <ClCompile>
@@ -266,6 +281,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|Win32'">
     <ClCompile>
@@ -276,6 +294,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
     <ClCompile>
@@ -286,6 +307,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
     <ClCompile>
@@ -296,6 +320,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <ClCompile>
@@ -306,6 +333,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <ClCompile>
@@ -316,6 +346,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
     <ClCompile>
@@ -326,6 +359,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
     <ClCompile>
@@ -336,6 +372,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
     <ClCompile>
@@ -346,6 +385,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
     <ClCompile>
@@ -356,6 +398,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <ClCompile>
@@ -366,6 +411,10 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>
+      </CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <ClCompile>
@@ -376,6 +425,9 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);wdmsec.lib</AdditionalDependencies>
     </Link>
+    <Inf>
+      <CatalogFileName>RamDiskDriver.cat</CatalogFileName>
+    </Inf>
   </ItemDefinitionGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
