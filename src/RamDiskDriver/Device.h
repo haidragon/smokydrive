@@ -37,8 +37,12 @@ typedef struct _DEVICE_EXTENSION
     LARGE_INTEGER       DiskSize;
     BYTE                *DiskMemory;
     DISK_GEOMETRY       Geometry;
-    //UNICODE_STRING      SymbolicLink;               // Dos symbolic name; Drive letter
-    //WCHAR               SymLinkBuffer[DRIVE_LETTER_LEN];
+
+    //WCHAR       DriveLetterBuffer[DRIVE_LETTER_LEN];
+    //WCHAR       DosDeviceNameBuffer[DOS_DEVNAME_BUFFER_SIZE];
+
+    UNICODE_STRING      SymbolicLink;               // Dos symbolic name; Drive letter
+    WCHAR               SymLinkBuffer[SYMLINK_BUFFER_SIZE];
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 //

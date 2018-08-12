@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "queue.tmh"
+#include <mountmgr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, RamDiskDriverQueueInitialize)
@@ -16,6 +17,8 @@ RamDiskDriverQueueInitialize(
     WDF_OBJECT_ATTRIBUTES  queue_attr;
     PAGED_CODE();
     
+    KdPrint((" RamDiskDriverQueueInitialize CALLed!\r\n"));
+
     //
     // Configure a default queue so that requests that are not
     // configure-fowarded using WdfDeviceConfigureRequestDispatching to goto
@@ -86,18 +89,97 @@ Return Value:
 
 --*/
 {
-    UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
     WdfRequestComplete(Request, STATUS_SUCCESS);
-    //IOCTL_DISK_GET_PARTITION_INFO
-    IOCTL_CODE code = {0};
+    
+    NTSTATUS          status = STATUS_INVALID_DEVICE_REQUEST;
+    ULONG_PTR         info = 0;
+    size_t            size;
+    PDEVICE_EXTENSION devext = QueueGetContext(Queue)->DevExt;
+
+    IOCTL_CODE code = { 0 };
     code.Value = IoControlCode;
-    DbgPrint("IOCTL code[0x08X]: Type=0x08X, Function=0x08X, Access=0x08X, Method=0x08X\r\n", 
-            IoControlCode, code.Fields.DeviceType, code.Fields.Function, 
-            code.Fields.Access, code.Fields.Method);
-    return;
+    
+    KdPrint(("IOCTL code[0x%08X]: Type=0x%08X, Function=0x%08X, Access=0x%08X, Method=0x%08X\r\n",
+        IoControlCode, code.Fields.DeviceType, code.Fields.Function,
+        code.Fields.Access, code.Fields.Method));
+
+    switch (IoControlCode) 
+    {
+    //不知道為何有這個REQUEST.... wdk sample裡面沒處理這個code
+        case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
+        {
+            PMOUNTDEV_NAME outbuf = NULL;
+            info = sizeof(MOUNTDEV_NAME) + wcslen(DOS_DEVICE_NAME) * 2;
+            status = WdfRequestRetrieveOutputBuffer(Request, info, &outbuf, &size);
+            if (NT_SUCCESS(status)) 
+            {
+                outbuf->NameLength = (USHORT)wcslen(DOS_DEVICE_NAME) * 2;
+                RtlCopyMemory(outbuf->Name, DOS_DEVICE_NAME, outbuf->NameLength);
+                status = STATUS_SUCCESS;
+            }
+        }
+        break;
+        case IOCTL_DISK_GET_PARTITION_INFO: 
+        {
+            PPARTITION_INFORMATION outbuf;
+            LPBOOT_SECTOR boot_sector = (LPBOOT_SECTOR)devext->DiskMemory;
+
+            info = sizeof(PARTITION_INFORMATION);
+
+            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION), &outbuf, &size);
+            if (NT_SUCCESS(status)) {
+
+                outbuf->PartitionType = PARTITION_FAT32;
+                outbuf->RecognizedPartition = TRUE;
+                if (boot_sector->FileSystemType[0] == 0)
+                {
+                    outbuf->PartitionType = PARTITION_ENTRY_UNUSED;
+                    outbuf->RecognizedPartition = FALSE;
+                }
+                outbuf->BootIndicator = FALSE;
+                outbuf->RewritePartition = FALSE;
+                outbuf->StartingOffset.QuadPart = 0;
+                outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
+                outbuf->HiddenSectors = (ULONG)(1L);
+                outbuf->PartitionNumber = (ULONG)(-1L);
+
+                status = STATUS_SUCCESS;
+            }
+        }
+        break;
+
+        case IOCTL_DISK_GET_DRIVE_GEOMETRY:  
+        {
+            PDISK_GEOMETRY outbuf;
+            //
+            // Return the drive geometry for the ram disk. Note that
+            // we return values which were made up to suit the disk size.
+            //
+            info = sizeof(DISK_GEOMETRY);
+
+            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(DISK_GEOMETRY), &outbuf, &size);
+            if (NT_SUCCESS(status) && size >= sizeof(DISK_GEOMETRY)) 
+            {
+                RtlCopyMemory(outbuf, &(devext->Geometry), sizeof(DISK_GEOMETRY));
+                status = STATUS_SUCCESS;
+            }
+        }
+        break;
+
+        case IOCTL_DISK_CHECK_VERIFY:
+        case IOCTL_DISK_IS_WRITABLE:
+
+            //
+            // Return status success
+            //
+
+            status = STATUS_SUCCESS;
+            break;
+    }
+
+    WdfRequestCompleteWithInformation(Request, status, info);
 }
 
 VOID
@@ -175,6 +257,8 @@ Return Value:
     // to crash with bugcheck code 9F.
     //
 
+    KdPrint((" RamDiskDriverEvtIoStop CALLed!\r\n"));
+
     return;
 }
 
@@ -190,6 +274,8 @@ IN size_t Length
     WDF_REQUEST_PARAMETERS params;
     LARGE_INTEGER          offset;
     WDFMEMORY              hmem;
+
+    KdPrint(("RamDiskDriverEvtIoRead Called!\r\n"));
 
     UNREFERENCED_PARAMETER(Queue);
     _Analysis_assume_(Length > 0);
@@ -228,6 +314,9 @@ IN size_t Length)
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(devext);
     UNREFERENCED_PARAMETER(hmem);
+
+    KdPrint(("RamDiskDriverEvtIoWrite Called!\r\n"));
+
     WDF_REQUEST_PARAMETERS_INIT(&params);
     WdfRequestGetParameters(Request, &params);
 

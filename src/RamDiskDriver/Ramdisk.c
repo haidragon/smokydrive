@@ -10,6 +10,7 @@
 
 NTSTATUS RegisterRamdiskDeviceName(WDFDEVICE device, PWDFDEVICE_INIT devinit)
 {
+    KdPrint((" RegisterRamdiskDeviceName CALLed!\r\n"));
     NTSTATUS status = 0;
 
     //assign device name. 
@@ -36,7 +37,9 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
 {
     NTSTATUS status = 0;
     SMOKYDISK_SETTING setting = {0};
-    
+
+    KdPrint((" InitDeviceExtension CALLed!\r\n"));
+
     LoadSetting(&setting);
     SIZE_T size = (SIZE_T)setting.DiskSize.QuadPart;
     devext->DiskMemory = ExAllocatePoolWithTag(NonPagedPool, size, MY_POOLTAG);
@@ -48,12 +51,23 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     }
     devext->DiskSize.QuadPart = setting.DiskSize.QuadPart;
     RtlCopyMemory(&devext->Geometry, &setting.Geometry, sizeof(DISK_GEOMETRY));
+    devext->SymbolicLink.Buffer = devext->SymLinkBuffer;
+    devext->SymbolicLink.MaximumLength = sizeof(devext->SymLinkBuffer);
+
+    //UNICODE_STRING dos_name;
+    //RtlInitUnicodeString(&dos_name, DOS_DEVICE_NAME);
+    //RtlCopyUnicodeString(&devext->SymbolicLink, &dos_name);
+    USHORT str_size = (USHORT)wcslen(DOS_DEVICE_NAME)*sizeof(WCHAR);
+    RtlCopyMemory(devext->SymLinkBuffer, DOS_DEVICE_NAME, str_size);
+    devext->SymbolicLink.Length = str_size;
 
     return status;
 }
 
 void LoadSetting(PSMOKYDISK_SETTING setting)
 {
+    KdPrint((" LoadSetting CALLed!\r\n"));
+
 //todo: read registry to load settings
     setting->DiskSize.QuadPart = DEFAULT_DISK_SIZE;
     setting->Geometry.TracksPerCylinder = TRACKS_PER_CYLINDER;
@@ -77,6 +91,7 @@ BOOLEAN IsValidIoParams(
 //  1.end of IO range should not exceed total size range.
 //  2.begin of IO range should be fit in disk.
 //  3.IO offset should be positive number.
+    KdPrint((" IsValidIoParams CALLed!\r\n"));
 
     LARGE_INTEGER begin = ByteOffset;
     LARGE_INTEGER end = ByteOffset;

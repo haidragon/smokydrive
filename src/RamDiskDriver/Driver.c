@@ -32,14 +32,11 @@ DriverEntry(
     _In_ PUNICODE_STRING RegistryPath
     )
 {
+    KdPrint((" DriverEntry CALLed!\r\n"));
+
     WDF_DRIVER_CONFIG config;
     NTSTATUS status;
-    //WDFDRIVER hDriver;
-    //WDF_OBJECT_ATTRIBUTES attributes;
-    //WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    //attributes.EvtCleanupCallback = RamDiskDriverEvtDriverContextCleanup;
     WDF_DRIVER_CONFIG_INIT(&config, RamDiskDriverEvtDeviceAdd);
-    //config.EvtDriverUnload = RamdiskDriverUnload;
 
     status = WdfDriverCreate(DriverObject,
                              RegistryPath,
@@ -47,7 +44,8 @@ DriverEntry(
                              &config,
                              WDF_NO_HANDLE);
 
-    //if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status)) 
+        KdPrint((" WdfDriverCreate() Failed! 0x%08X" , status));
     //    return status;
     //}
     return status;
@@ -62,6 +60,7 @@ RamDiskDriverEvtDeviceAdd(
     NTSTATUS status;
     UNREFERENCED_PARAMETER(Driver);
     PAGED_CODE();
+    KdPrint((" RamDiskDriverEvtDeviceAdd CALLed!\r\n"));
 
     status = RamDiskDriverCreateDevice(DeviceInit);
     return status;
@@ -81,6 +80,8 @@ RamDiskDriverEvtDriverContextCleanup(
 {
     PAGED_CODE ();
     PDEVICE_EXTENSION pDevExt = DeviceGetExtension(Device);
+
+    KdPrint((" RamDiskDriverEvtDriverContextCleanup CALLed!\r\n"));
 
     if (pDevExt->DiskMemory)
     {
