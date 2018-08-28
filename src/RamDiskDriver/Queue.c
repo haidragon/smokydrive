@@ -91,7 +91,6 @@ Return Value:
 {
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
-    WdfRequestComplete(Request, STATUS_SUCCESS);
     
     NTSTATUS          status = STATUS_INVALID_DEVICE_REQUEST;
     ULONG_PTR         info = 0;
@@ -107,18 +106,37 @@ Return Value:
 
     switch (IoControlCode) 
     {
-    //不知道為何有這個REQUEST.... wdk sample裡面沒處理這個code
+    //VOLUMN system 從VISTA後都會對VOLUMN device發這個code
         case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
         {
             PMOUNTDEV_NAME outbuf = NULL;
-            info = sizeof(MOUNTDEV_NAME) + wcslen(DOS_DEVICE_NAME) * 2;
-            status = WdfRequestRetrieveOutputBuffer(Request, info, &outbuf, &size);
+            size = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
+            if (OutputBufferLength < sizeof(MOUNTDEV_NAME) || OutputBufferLength < size) 
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                info = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
+                break;
+            }
+            
+            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_NAME), &outbuf, &size);
+            
             if (NT_SUCCESS(status)) 
             {
-                outbuf->NameLength = (USHORT)wcslen(DOS_DEVICE_NAME) * 2;
-                RtlCopyMemory(outbuf->Name, DOS_DEVICE_NAME, outbuf->NameLength);
+                RtlZeroMemory(outbuf, sizeof(MOUNTDEV_NAME));
+                outbuf->NameLength = (USHORT)wcslen(NT_DEVICE_NAME) * 2;
+                RtlCopyMemory(outbuf->Name, NT_DEVICE_NAME, outbuf->NameLength);
                 status = STATUS_SUCCESS;
+                
+                KdPrint(("VirtVol IOCTL_MOUNTDEV_QUERY_DEVICE_NAME SUCCESS %ws\n", outbuf->Name));
             }
+            //info = sizeof(MOUNTDEV_NAME) + (wcslen(DOS_DEVICE_NAME)+1) * 2;
+            //status = WdfRequestRetrieveOutputBuffer(Request, info, &outbuf, &size);
+            //if (NT_SUCCESS(status)) 
+            //{
+            //    outbuf->NameLength = (USHORT)wcslen(DOS_DEVICE_NAME) * 2;
+            //    RtlCopyMemory(outbuf->Name, DOS_DEVICE_NAME, outbuf->NameLength);
+            //    status = STATUS_SUCCESS;
+            //}
         }
         break;
         case IOCTL_DISK_GET_PARTITION_INFO: 
@@ -175,7 +193,7 @@ Return Value:
             // Return status success
             //
 
-            status = STATUS_SUCCESS;
+            //status = STATUS_SUCCESS;
             break;
     }
 
@@ -257,7 +275,7 @@ Return Value:
     // to crash with bugcheck code 9F.
     //
 
-    KdPrint((" RamDiskDriverEvtIoStop CALLed!\r\n"));
+    KdPrint((" RamDiskDriverEvtIoStop CaLLed!\r\n"));
 
     return;
 }
