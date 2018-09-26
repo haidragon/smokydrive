@@ -42,6 +42,11 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
 
     LoadSetting(&setting);
     SIZE_T size = (SIZE_T)setting.DiskSize.QuadPart;
+    
+    //Storage Device Number
+    //why begin from 99?
+    devext->StorageNumber = 99 + 1;
+
     devext->DiskMemory = ExAllocatePoolWithTag(NonPagedPool, size, MY_POOLTAG);
     if (NULL == devext->DiskMemory)
     {
@@ -54,9 +59,6 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     devext->SymbolicLink.Buffer = devext->SymLinkBuffer;
     devext->SymbolicLink.MaximumLength = sizeof(devext->SymLinkBuffer);
 
-    //UNICODE_STRING dos_name;
-    //RtlInitUnicodeString(&dos_name, DOS_DEVICE_NAME);
-    //RtlCopyUnicodeString(&devext->SymbolicLink, &dos_name);
     USHORT str_size = (USHORT)wcslen(DOS_DEVICE_NAME)*sizeof(WCHAR);
     RtlCopyMemory(devext->SymLinkBuffer, DOS_DEVICE_NAME, str_size);
     devext->SymbolicLink.Length = str_size;

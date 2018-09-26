@@ -1,6 +1,9 @@
 #include "driver.h"
 #include "queue.tmh"
 #include <mountmgr.h>
+#include <ntdddisk.h>
+#include <ntddvol.h>
+#include <mountdev.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, RamDiskDriverQueueInitialize)
@@ -29,7 +32,7 @@ RamDiskDriverQueueInitialize(
         WdfIoQueueDispatchSequential);  //todo: read-write lock to accept parallel io requests.
 
     queueConfig.EvtIoDeviceControl = RamDiskDriverEvtIoDeviceControl;
-    queueConfig.EvtIoStop = RamDiskDriverEvtIoStop;
+    //queueConfig.EvtIoStop = RamDiskDriverEvtIoStop;
     queueConfig.EvtIoRead = RamDiskDriverEvtIoRead;
     queueConfig.EvtIoWrite = RamDiskDriverEvtIoWrite;
 
@@ -108,86 +111,148 @@ Return Value:
     {
     //VOLUMN system 從VISTA後都會對VOLUMN device發這個code
         case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
-        {
-            PMOUNTDEV_NAME outbuf = NULL;
-            size = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
-            if (OutputBufferLength < sizeof(MOUNTDEV_NAME) || OutputBufferLength < size) 
             {
-                status = STATUS_BUFFER_TOO_SMALL;
-                info = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
-                break;
-            }
-            
-            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_NAME), &outbuf, &size);
-            
-            if (NT_SUCCESS(status)) 
-            {
-                RtlZeroMemory(outbuf, sizeof(MOUNTDEV_NAME));
-                outbuf->NameLength = (USHORT)wcslen(NT_DEVICE_NAME) * 2;
-                RtlCopyMemory(outbuf->Name, NT_DEVICE_NAME, outbuf->NameLength);
-                status = STATUS_SUCCESS;
-                
-                KdPrint(("VirtVol IOCTL_MOUNTDEV_QUERY_DEVICE_NAME SUCCESS %ws\n", outbuf->Name));
-            }
-            //info = sizeof(MOUNTDEV_NAME) + (wcslen(DOS_DEVICE_NAME)+1) * 2;
-            //status = WdfRequestRetrieveOutputBuffer(Request, info, &outbuf, &size);
-            //if (NT_SUCCESS(status)) 
-            //{
-            //    outbuf->NameLength = (USHORT)wcslen(DOS_DEVICE_NAME) * 2;
-            //    RtlCopyMemory(outbuf->Name, DOS_DEVICE_NAME, outbuf->NameLength);
-            //    status = STATUS_SUCCESS;
-            //}
-        }
-        break;
-        case IOCTL_DISK_GET_PARTITION_INFO: 
-        {
-            PPARTITION_INFORMATION outbuf;
-            LPBOOT_SECTOR boot_sector = (LPBOOT_SECTOR)devext->DiskMemory;
-
-            info = sizeof(PARTITION_INFORMATION);
-
-            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION), &outbuf, &size);
-            if (NT_SUCCESS(status)) {
-
-                outbuf->PartitionType = PARTITION_FAT32;
-                outbuf->RecognizedPartition = TRUE;
-                if (boot_sector->FileSystemType[0] == 0)
+                PMOUNTDEV_NAME outbuf = NULL;
+                size = 0;
+                if (OutputBufferLength < sizeof(MOUNTDEV_NAME))
                 {
-                    outbuf->PartitionType = PARTITION_ENTRY_UNUSED;
-                    outbuf->RecognizedPartition = FALSE;
+                //回應 STATUS_BUFFER_TOO_SMALL  => MountMgr就不會再鳥你
+                //回應 STATUS_BUFFER_OVERFLOW => MountMgr 會調整buffer size再來問一次
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(MOUNTDEV_NAME);
+                    KdPrint(("Output Buffer too small\r\n"));
+                    break;
                 }
-                outbuf->BootIndicator = FALSE;
-                outbuf->RewritePartition = FALSE;
-                outbuf->StartingOffset.QuadPart = 0;
-                outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
-                outbuf->HiddenSectors = (ULONG)(1L);
-                outbuf->PartitionNumber = (ULONG)(-1L);
+            
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_NAME), &outbuf, &size);
+                KdPrint(("WdfRequestRetrieveOutputBuffer() == 0x%08X%, size = %d\n", status, size));
 
-                status = STATUS_SUCCESS;
+                //query 會有3次，頭一次取得 NTDevice Name
+                //但第二次只會有 wcslen() == 4 的 outputbuffer
+                //第三次會依第二次回傳的值來配置
+                if (NT_SUCCESS(status)) 
+                {
+                    size = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
+                    outbuf->NameLength = (USHORT)size;
+                    info = FIELD_OFFSET(MOUNTDEV_NAME, Name) + outbuf->NameLength;
+
+                    if (OutputBufferLength < size)
+                    {
+                        status = STATUS_BUFFER_OVERFLOW;
+                        info = FIELD_OFFSET(MOUNTDEV_NAME, Name);
+                        break;
+                    }
+
+                    RtlZeroMemory(outbuf, size);
+                    RtlCopyMemory(outbuf->Name, NT_DEVICE_NAME, outbuf->NameLength);
+                    status = STATUS_SUCCESS;
+                
+                    KdPrint(("VirtVol IOCTL_MOUNTDEV_QUERY_DEVICE_NAME SUCCESS %ws\n", outbuf->Name));
+                }
             }
-        }
-        break;
-
-        case IOCTL_DISK_GET_DRIVE_GEOMETRY:  
-        {
-            PDISK_GEOMETRY outbuf;
-            //
-            // Return the drive geometry for the ram disk. Note that
-            // we return values which were made up to suit the disk size.
-            //
-            info = sizeof(DISK_GEOMETRY);
-
-            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(DISK_GEOMETRY), &outbuf, &size);
-            if (NT_SUCCESS(status) && size >= sizeof(DISK_GEOMETRY)) 
+            break;
+        case IOCTL_DISK_GET_PARTITION_INFO: 
             {
-                RtlCopyMemory(outbuf, &(devext->Geometry), sizeof(DISK_GEOMETRY));
-                status = STATUS_SUCCESS;
-            }
-        }
-        break;
+                PPARTITION_INFORMATION outbuf;
+                LPBOOT_SECTOR boot_sector = (LPBOOT_SECTOR)devext->DiskMemory;
 
+                info = sizeof(PARTITION_INFORMATION);
+
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION), &outbuf, &size);
+                if (NT_SUCCESS(status)) {
+
+                    outbuf->PartitionType = PARTITION_FAT32;
+                    outbuf->RecognizedPartition = TRUE;
+                    if (boot_sector->FileSystemType[0] == 0)
+                    {
+                        outbuf->PartitionType = PARTITION_ENTRY_UNUSED;
+                        outbuf->RecognizedPartition = FALSE;
+                    }
+                    outbuf->BootIndicator = FALSE;
+                    outbuf->RewritePartition = FALSE;
+                    outbuf->StartingOffset.QuadPart = 0;
+                    outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
+                    outbuf->HiddenSectors = (ULONG)(1L);
+                    outbuf->PartitionNumber = (ULONG)(-1L);
+
+                    status = STATUS_SUCCESS;
+                }
+            }
+            break;
+
+        //Get the disk geometry information.
+        //e.g. Cylinders, sectors, tracks....etc.
+        case IOCTL_DISK_GET_DRIVE_GEOMETRY:  
+            {
+                PDISK_GEOMETRY outbuf;
+                //
+                // Return the drive geometry for the ram disk. Note that
+                // we return values which were made up to suit the disk size.
+                //
+                info = sizeof(DISK_GEOMETRY);
+
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(DISK_GEOMETRY), &outbuf, &size);
+                if (NT_SUCCESS(status) && size >= sizeof(DISK_GEOMETRY)) 
+                {
+                    RtlCopyMemory(outbuf, &(devext->Geometry), sizeof(DISK_GEOMETRY));
+                    status = STATUS_SUCCESS;
+                }
+            }
+            break;
+
+        case IOCTL_STORAGE_GET_DEVICE_NUMBER:
+            {
+                if (OutputBufferLength < sizeof(STORAGE_DEVICE_NUMBER)) 
+                {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(STORAGE_DEVICE_NUMBER);
+                }
+                else {
+                    PSTORAGE_DEVICE_NUMBER outbuf;
+
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(STORAGE_DEVICE_NUMBER), &outbuf, &size);
+                    if (NT_SUCCESS(status)) {
+                        outbuf->DeviceType = FILE_DEVICE_DISK;
+                        outbuf->DeviceNumber = devext->StorageNumber;
+                        outbuf->PartitionNumber = (ULONG)(-1L);
+                        status = STATUS_SUCCESS;
+                        info = sizeof(STORAGE_DEVICE_NUMBER);
+                    }
+                }
+            }
+            break;
+
+        //Query total size of disk
+        case IOCTL_DISK_GET_LENGTH_INFO:
+            {
+                if (OutputBufferLength < sizeof(GET_LENGTH_INFORMATION)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(GET_LENGTH_INFORMATION);
+                }
+                else {
+                    PGET_LENGTH_INFORMATION leninfo;
+
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(GET_LENGTH_INFORMATION), &leninfo, &size);
+                    if (NT_SUCCESS(status)) {
+                        leninfo->Length.QuadPart = devext->DiskSize.QuadPart;
+                        status = STATUS_SUCCESS;
+                        info = sizeof(GET_LENGTH_INFORMATION);
+                    }
+                }
+            }
+            break;
+        case IOCTL_DISK_GET_PARTITION_INFO_EX:
         case IOCTL_DISK_CHECK_VERIFY:
         case IOCTL_DISK_IS_WRITABLE:
+        case IOCTL_VOLUME_IS_DYNAMIC:
+        case IOCTL_VOLUME_ONLINE:
+        case IOCTL_MOUNTDEV_QUERY_STABLE_GUID:
+        case IOCTL_MOUNTDEV_LINK_CREATED:
+        case IOCTL_VOLUME_GET_GPT_ATTRIBUTES:
+        case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:
+        case IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME:
+        case IOCTL_MOUNTDEV_QUERY_UNIQUE_ID:
+        case IOCTL_STORAGE_GET_HOTPLUG_INFO:
 
             //
             // Return status success
@@ -197,6 +262,7 @@ Return Value:
             break;
     }
 
+    KdPrint(("WdfRequestCompleteWithInformation() status == 0x%08X%, info = %d\n", status, info));
     WdfRequestCompleteWithInformation(Request, status, info);
 }
 

@@ -37,7 +37,7 @@ typedef struct _DEVICE_EXTENSION
     LARGE_INTEGER       DiskSize;
     BYTE                *DiskMemory;
     DISK_GEOMETRY       Geometry;
-
+    ULONG               StorageNumber;
     //WCHAR       DriveLetterBuffer[DRIVE_LETTER_LEN];
     //WCHAR       DosDeviceNameBuffer[DOS_DEVNAME_BUFFER_SIZE];
 

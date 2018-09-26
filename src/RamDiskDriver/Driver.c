@@ -37,7 +37,7 @@ DriverEntry(
     WDF_DRIVER_CONFIG config;
     NTSTATUS status;
     WDF_DRIVER_CONFIG_INIT(&config, RamDiskDriverEvtDeviceAdd);
-
+    config.EvtDriverUnload = RamDiskDriverEvtDriverUnload;
     status = WdfDriverCreate(DriverObject,
                              RegistryPath,
                              WDF_NO_OBJECT_ATTRIBUTES,
@@ -89,3 +89,11 @@ RamDiskDriverEvtDriverContextCleanup(
         pDevExt->DiskMemory = NULL;
     }
 }
+
+VOID RamDiskDriverEvtDriverUnload(IN WDFDRIVER Driver)
+{
+    DbgPrint("RamDiskDriverEvtDriverUnload: \n");
+    UNREFERENCED_PARAMETER(Driver);
+    return;
+}
+

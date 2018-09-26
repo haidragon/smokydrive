@@ -35,23 +35,6 @@ RamDiskDriverCreateDevice(
 
     PAGED_CODE();
 
-    //sequence:
-    //Assign NT Device Name
-    //set DeviceType
-    //set I/O type
-    //set exclusive
-    //create device
-    //get device extension
-    //get sequential io queue
-    //set IOCtrl / Read / Write handler function
-    //set queue attribute to queue extension (WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE)
-    //create i/o queue
-    //get queue extension
-    //set queue extension's device extension
-    //set SetForwardProgressOnQueue() if KMDF_VER >=1.9
-    //fill device extension
-    //set DosName as Symbolic Link
-
     DECLARE_CONST_UNICODE_STRING(nt_name, NT_DEVICE_NAME);
     status = WdfDeviceInitAssignName(DeviceInit, &nt_name);
     if (!NT_SUCCESS(status))
@@ -59,6 +42,13 @@ RamDiskDriverCreateDevice(
         KdPrint(("WdfDeviceInitAssignName() failed 0x%08X", status));
         return status;
     }
+
+    WDF_PNPPOWER_EVENT_CALLBACKS    power_callbacks;
+    WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&power_callbacks);
+    power_callbacks.EvtDevicePrepareHardware = RamDiskEvtDevicePrepareHardware;
+    power_callbacks.EvtDeviceD0Entry = RamDiskEvtDeviceD0Entry;
+    power_callbacks.EvtDeviceReleaseHardware = RamDiskEvtDeviceReleaseHardware;
+    WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &power_callbacks);
 
     WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_DISK);
     WdfDeviceInitSetIoType(DeviceInit, WdfDeviceIoDirect);
@@ -89,4 +79,27 @@ RamDiskDriverCreateDevice(
     return status;
 }
 
+NTSTATUS RamDiskEvtDeviceD0Entry(IN WDFDEVICE Device, IN WDF_POWER_DEVICE_STATE PreviousState)
+{
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(PreviousState);
+    KdPrint((" RamDiskEvtDeviceD0Entry CALLed!\r\n"));
 
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS RamDiskEvtDevicePrepareHardware(IN WDFDEVICE Device, IN WDFCMRESLIST ResourcesRaw, IN WDFCMRESLIST ResourcesTranslated)
+{
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(ResourcesRaw);
+    UNREFERENCED_PARAMETER(ResourcesTranslated);
+    KdPrint((" RamDiskEvtDevicePrepareHardware CALLed!\r\n"));
+    return STATUS_SUCCESS;
+}
+NTSTATUS RamDiskEvtDeviceReleaseHardware(IN WDFDEVICE Device, IN WDFCMRESLIST ResourceListTranslated)
+{
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(ResourceListTranslated);
+    KdPrint((" RamDiskEvtDeviceReleaseHardware CALLed!\r\n"));
+    return STATUS_SUCCESS;
+}
