@@ -45,7 +45,8 @@ RamDiskDriverQueueInitialize(
                  &queue
                  );
 
-    if( !NT_SUCCESS(status) ) {
+    if( !NT_SUCCESS(status) ) 
+    {
         KdPrint(("WdfIoQueueCreate() failed 0x%08X", status));
         return status;
     }
@@ -151,6 +152,8 @@ Return Value:
                 }
             }
             break;
+
+        //舊型 MBR 的 partition info
         case IOCTL_DISK_GET_PARTITION_INFO: 
             {
                 PPARTITION_INFORMATION outbuf;
@@ -200,6 +203,7 @@ Return Value:
             }
             break;
 
+        //一個Ramdisk Driver可以配置多個不同的 FDO....
         case IOCTL_STORAGE_GET_DEVICE_NUMBER:
             {
                 if (OutputBufferLength < sizeof(STORAGE_DEVICE_NUMBER)) 
@@ -241,12 +245,62 @@ Return Value:
                 }
             }
             break;
+        //新型 MBR/GPT 兩者兼用的 partition info
         case IOCTL_DISK_GET_PARTITION_INFO_EX:
+            {
+                if (OutputBufferLength < sizeof(PARTITION_INFORMATION_EX)) 
+                {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(PARTITION_INFORMATION_EX);
+                }
+                else 
+                {
+                    PPARTITION_INFORMATION_EX outbuf;
+                    PBOOT_SECTOR bootSector = (PBOOT_SECTOR)devext->DiskMemory;
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION_EX), &outbuf, &size);
+                    if (NT_SUCCESS(status)) {
+                        outbuf->PartitionStyle = PARTITION_STYLE_MBR;
+                        outbuf->StartingOffset.QuadPart = 0;
+                        outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
+                        outbuf->PartitionNumber = (ULONG)(-1L);
+                        outbuf->RewritePartition = FALSE;
+                        outbuf->Mbr.PartitionType = PARTITION_IFS;  //0x07 == IFS 或 NTFS 或 exFAT
+                            //(bootSector->bsFileSystemType[4] == '6') ? PARTITION_FAT_16 : PARTITION_FAT_12;
+                        outbuf->Mbr.BootIndicator = FALSE;
+                        outbuf->Mbr.RecognizedPartition = FALSE;
+                        outbuf->Mbr.HiddenSectors = (ULONG)(-1L);
+                        status = STATUS_SUCCESS;
+                        info = sizeof(PARTITION_INFORMATION_EX);
+                    }
+                }
+            }
+            break;
         case IOCTL_DISK_CHECK_VERIFY:
         case IOCTL_DISK_IS_WRITABLE:
         case IOCTL_VOLUME_IS_DYNAMIC:
         case IOCTL_VOLUME_ONLINE:
+            status = STATUS_SUCCESS;
+            break;
+
+        //取得Disk Volume GUID => MountMgr 都用 GUID 操作 volume 的
         case IOCTL_MOUNTDEV_QUERY_STABLE_GUID:
+            {
+                if (OutputBufferLength < sizeof(MOUNTDEV_STABLE_GUID)) 
+                {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(MOUNTDEV_STABLE_GUID);
+                }
+                else {
+                    PMOUNTDEV_STABLE_GUID guid;
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_STABLE_GUID), &guid, &size);
+                    if (NT_SUCCESS(status)) {
+                        status = STATUS_SUCCESS;
+                        guid->StableGuid = devext->DeviceGUID;
+                        info = sizeof(MOUNTDEV_STABLE_GUID);
+                    }
+                }
+            }
+            break;
         case IOCTL_MOUNTDEV_LINK_CREATED:
         case IOCTL_VOLUME_GET_GPT_ATTRIBUTES:
         case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:

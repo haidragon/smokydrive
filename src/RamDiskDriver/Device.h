@@ -40,10 +40,41 @@ typedef struct _DEVICE_EXTENSION
     ULONG               StorageNumber;
     //WCHAR       DriveLetterBuffer[DRIVE_LETTER_LEN];
     //WCHAR       DosDeviceNameBuffer[DOS_DEVNAME_BUFFER_SIZE];
-
+    GUID                DeviceGUID;
     UNICODE_STRING      SymbolicLink;               // Dos symbolic name; Drive letter
     WCHAR               SymLinkBuffer[SYMLINK_BUFFER_SIZE];
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
+
+#pragma pack(1)
+
+//boot sectorµ²ºc
+typedef struct  _BOOT_SECTOR
+{
+    UCHAR       bsJump[3];          // x86 jmp instruction, checked by FS
+    CCHAR       bsOemName[8];       // OEM name of formatter
+    USHORT      bsBytesPerSec;      // Bytes per Sector
+    UCHAR       bsSecPerClus;       // Sectors per Cluster
+    USHORT      bsResSectors;       // Reserved Sectors
+    UCHAR       bsFATs;             // Number of FATs - we always use 1
+    USHORT      bsRootDirEnts;      // Number of Root Dir Entries
+    USHORT      bsSectors;          // Number of Sectors
+    UCHAR       bsMedia;            // Media type - we use VIRTVOL_MEDIA_TYPE
+    USHORT      bsFATsecs;          // Number of FAT sectors
+    USHORT      bsSecPerTrack;      // Sectors per Track - we use 32
+    USHORT      bsHeads;            // Number of Heads - we use 2
+    ULONG       bsHiddenSecs;       // Hidden Sectors - we set to 0
+    ULONG       bsHugeSectors;      // Number of Sectors if > 32 MB size
+    UCHAR       bsDriveNumber;      // Drive Number - not used
+    UCHAR       bsReserved1;        // Reserved
+    UCHAR       bsBootSignature;    // New Format Boot Signature - 0x29
+    ULONG       bsVolumeID;         // VolumeID - set to 0x12345678
+    CCHAR       bsLabel[11];        // Label - set to Virtvol
+    CCHAR       bsFileSystemType[8];// File System Type - FAT12 or FAT16
+    CCHAR       bsReserved2[448];   // Reserved
+    UCHAR       bsSig2[2];          // Originial Boot Signature - 0x55, 0xAA
+}   BOOT_SECTOR, *PBOOT_SECTOR;
+
+#pragma pack()
 
 //
 // This macro will generate an inline function called DeviceGetContext

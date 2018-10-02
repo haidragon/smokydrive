@@ -62,7 +62,8 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     USHORT str_size = (USHORT)wcslen(DOS_DEVICE_NAME)*sizeof(WCHAR);
     RtlCopyMemory(devext->SymLinkBuffer, DOS_DEVICE_NAME, str_size);
     devext->SymbolicLink.Length = str_size;
-
+    
+    ExUuidCreate(&devext->DeviceGUID);
     return status;
 }
 
