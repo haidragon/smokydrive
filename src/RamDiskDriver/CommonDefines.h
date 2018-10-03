@@ -31,6 +31,7 @@ typedef struct _SMOKYDISK_SETTING
 
 }SMOKYDISK_SETTING, *PSMOKYDISK_SETTING;
 
+#pragma pack(1)
 typedef struct  _BOOT_SECTOR
 {
     UCHAR       Jump[3];          // x86 jmp instruction, checked by FS
@@ -55,6 +56,7 @@ typedef struct  _BOOT_SECTOR
     CCHAR       FileSystemType[8];// File System Type - FAT12 or FAT16
     CCHAR       Reserved2[448];   // Reserved
     UCHAR       Sig2[2];          // Originial Boot Signature - 0x55, 0xAA
-}   BOOT_SECTOR, *LPBOOT_SECTOR;
+}   BOOT_SECTOR, *PBOOT_SECTOR, *LPBOOT_SECTOR;
+#pragma pack()
 
 #endif __SMOKY_RAMDISK_COMMON_DEFINES__

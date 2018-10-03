@@ -64,6 +64,11 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     devext->SymbolicLink.Length = str_size;
     
     ExUuidCreate(&devext->DeviceGUID);
+    devext->HotPlugInfo.Size = sizeof(STORAGE_HOTPLUG_INFO);
+    devext->HotPlugInfo.DeviceHotplug = TRUE;
+    devext->HotPlugInfo.MediaHotplug = TRUE;
+    devext->HotPlugInfo.MediaRemovable = TRUE;
+    devext->HotPlugInfo.WriteCacheEnableOverride = FALSE;   //cache policy無法在DeviceManager頁面修改
     return status;
 }
 

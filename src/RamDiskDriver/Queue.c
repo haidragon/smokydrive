@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "queue.tmh"
+#include "CommonDefines.h"
 #include <mountmgr.h>
 #include <ntdddisk.h>
 #include <ntddvol.h>
@@ -113,7 +114,7 @@ Return Value:
     //VOLUMN system 從VISTA後都會對VOLUMN device發這個code
         case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
             {
-                PMOUNTDEV_NAME outbuf = NULL;
+                PMOUNTDEV_NAME name = NULL;
                 size = 0;
                 if (OutputBufferLength < sizeof(MOUNTDEV_NAME))
                 {
@@ -125,7 +126,7 @@ Return Value:
                     break;
                 }
             
-                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_NAME), &outbuf, &size);
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_NAME), &name, &size);
                 KdPrint(("WdfRequestRetrieveOutputBuffer() == 0x%08X%, size = %d\n", status, size));
 
                 //query 會有3次，頭一次取得 NTDevice Name
@@ -134,8 +135,8 @@ Return Value:
                 if (NT_SUCCESS(status)) 
                 {
                     size = sizeof(MOUNTDEV_NAME) + (wcslen(NT_DEVICE_NAME) + 1) * 2;
-                    outbuf->NameLength = (USHORT)size;
-                    info = FIELD_OFFSET(MOUNTDEV_NAME, Name) + outbuf->NameLength;
+                    name->NameLength = (USHORT)size;
+                    info = FIELD_OFFSET(MOUNTDEV_NAME, Name) + name->NameLength;
 
                     if (OutputBufferLength < size)
                     {
@@ -144,11 +145,11 @@ Return Value:
                         break;
                     }
 
-                    RtlZeroMemory(outbuf, size);
-                    RtlCopyMemory(outbuf->Name, NT_DEVICE_NAME, outbuf->NameLength);
+                    RtlZeroMemory(name, size);
+                    RtlCopyMemory(name->Name, NT_DEVICE_NAME, name->NameLength);
                     status = STATUS_SUCCESS;
                 
-                    KdPrint(("VirtVol IOCTL_MOUNTDEV_QUERY_DEVICE_NAME SUCCESS %ws\n", outbuf->Name));
+                    KdPrint(("VirtVol IOCTL_MOUNTDEV_QUERY_DEVICE_NAME SUCCESS %ws\n", name->Name));
                 }
             }
             break;
@@ -156,27 +157,27 @@ Return Value:
         //舊型 MBR 的 partition info
         case IOCTL_DISK_GET_PARTITION_INFO: 
             {
-                PPARTITION_INFORMATION outbuf;
+                PPARTITION_INFORMATION part_info;
                 LPBOOT_SECTOR boot_sector = (LPBOOT_SECTOR)devext->DiskMemory;
 
                 info = sizeof(PARTITION_INFORMATION);
 
-                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION), &outbuf, &size);
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION), &part_info, &size);
                 if (NT_SUCCESS(status)) {
 
-                    outbuf->PartitionType = PARTITION_FAT32;
-                    outbuf->RecognizedPartition = TRUE;
+                    part_info->PartitionType = PARTITION_FAT32;
+                    part_info->RecognizedPartition = TRUE;
                     if (boot_sector->FileSystemType[0] == 0)
                     {
-                        outbuf->PartitionType = PARTITION_ENTRY_UNUSED;
-                        outbuf->RecognizedPartition = FALSE;
+                        part_info->PartitionType = PARTITION_ENTRY_UNUSED;
+                        part_info->RecognizedPartition = FALSE;
                     }
-                    outbuf->BootIndicator = FALSE;
-                    outbuf->RewritePartition = FALSE;
-                    outbuf->StartingOffset.QuadPart = 0;
-                    outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
-                    outbuf->HiddenSectors = (ULONG)(1L);
-                    outbuf->PartitionNumber = (ULONG)(-1L);
+                    part_info->BootIndicator = FALSE;
+                    part_info->RewritePartition = FALSE;
+                    part_info->StartingOffset.QuadPart = 0;
+                    part_info->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
+                    part_info->HiddenSectors = (ULONG)(1L);
+                    part_info->PartitionNumber = (ULONG)(-1L);
 
                     status = STATUS_SUCCESS;
                 }
@@ -187,17 +188,17 @@ Return Value:
         //e.g. Cylinders, sectors, tracks....etc.
         case IOCTL_DISK_GET_DRIVE_GEOMETRY:  
             {
-                PDISK_GEOMETRY outbuf;
+                PDISK_GEOMETRY geometry;
                 //
                 // Return the drive geometry for the ram disk. Note that
                 // we return values which were made up to suit the disk size.
                 //
                 info = sizeof(DISK_GEOMETRY);
 
-                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(DISK_GEOMETRY), &outbuf, &size);
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(DISK_GEOMETRY), &geometry, &size);
                 if (NT_SUCCESS(status) && size >= sizeof(DISK_GEOMETRY)) 
                 {
-                    RtlCopyMemory(outbuf, &(devext->Geometry), sizeof(DISK_GEOMETRY));
+                    RtlCopyMemory(geometry, &(devext->Geometry), sizeof(DISK_GEOMETRY));
                     status = STATUS_SUCCESS;
                 }
             }
@@ -212,13 +213,13 @@ Return Value:
                     info = sizeof(STORAGE_DEVICE_NUMBER);
                 }
                 else {
-                    PSTORAGE_DEVICE_NUMBER outbuf;
+                    PSTORAGE_DEVICE_NUMBER device_no;
 
-                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(STORAGE_DEVICE_NUMBER), &outbuf, &size);
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(STORAGE_DEVICE_NUMBER), &device_no, &size);
                     if (NT_SUCCESS(status)) {
-                        outbuf->DeviceType = FILE_DEVICE_DISK;
-                        outbuf->DeviceNumber = devext->StorageNumber;
-                        outbuf->PartitionNumber = (ULONG)(-1L);
+                        device_no->DeviceType = FILE_DEVICE_DISK;
+                        device_no->DeviceNumber = devext->StorageNumber;
+                        device_no->PartitionNumber = (ULONG)(-1L);
                         status = STATUS_SUCCESS;
                         info = sizeof(STORAGE_DEVICE_NUMBER);
                     }
@@ -255,20 +256,20 @@ Return Value:
                 }
                 else 
                 {
-                    PPARTITION_INFORMATION_EX outbuf;
-                    PBOOT_SECTOR bootSector = (PBOOT_SECTOR)devext->DiskMemory;
-                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION_EX), &outbuf, &size);
+                    PPARTITION_INFORMATION_EX part_info_ex;
+                    //PBOOT_SECTOR bootSector = (PBOOT_SECTOR)devext->DiskMemory;
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(PARTITION_INFORMATION_EX), &part_info_ex, &size);
                     if (NT_SUCCESS(status)) {
-                        outbuf->PartitionStyle = PARTITION_STYLE_MBR;
-                        outbuf->StartingOffset.QuadPart = 0;
-                        outbuf->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
-                        outbuf->PartitionNumber = (ULONG)(-1L);
-                        outbuf->RewritePartition = FALSE;
-                        outbuf->Mbr.PartitionType = PARTITION_IFS;  //0x07 == IFS 或 NTFS 或 exFAT
+                        part_info_ex->PartitionStyle = PARTITION_STYLE_MBR;
+                        part_info_ex->StartingOffset.QuadPart = 0;
+                        part_info_ex->PartitionLength.QuadPart = devext->DiskSize.QuadPart;
+                        part_info_ex->PartitionNumber = (ULONG)(-1L);
+                        part_info_ex->RewritePartition = FALSE;
+                        part_info_ex->Mbr.PartitionType = PARTITION_IFS;  //0x07 == IFS 或 NTFS 或 exFAT
                             //(bootSector->bsFileSystemType[4] == '6') ? PARTITION_FAT_16 : PARTITION_FAT_12;
-                        outbuf->Mbr.BootIndicator = FALSE;
-                        outbuf->Mbr.RecognizedPartition = FALSE;
-                        outbuf->Mbr.HiddenSectors = (ULONG)(-1L);
+                        part_info_ex->Mbr.BootIndicator = FALSE;
+                        part_info_ex->Mbr.RecognizedPartition = FALSE;
+                        part_info_ex->Mbr.HiddenSectors = (ULONG)(-1L);
                         status = STATUS_SUCCESS;
                         info = sizeof(PARTITION_INFORMATION_EX);
                     }
@@ -301,18 +302,127 @@ Return Value:
                 }
             }
             break;
+        //(optional) The mount manager uses this IOCTL to alert the client driver 
+        //that a persistent name has been assigned to its volume. 
+        //The input for this IOCTL is the persistent name assigned.
         case IOCTL_MOUNTDEV_LINK_CREATED:
+            {
+                PMOUNTDEV_NAME name;
+                if (InputBufferLength >= sizeof(MOUNTDEV_NAME)) {
+                    status = WdfRequestRetrieveInputBuffer(Request, sizeof(MOUNTDEV_NAME), &name, &size);
+                    if (NT_SUCCESS(status)) 
+                    {
+                        KdPrint(("MOUNTDEV_LINK NAME = %S", name->Name));
+                    }
+                }
+                status = STATUS_SUCCESS;
+            }
+            break;
+        //取得Volume的 GPT 屬性
         case IOCTL_VOLUME_GET_GPT_ATTRIBUTES:
+            {
+                if (OutputBufferLength < sizeof(VOLUME_GET_GPT_ATTRIBUTES_INFORMATION)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(VOLUME_GET_GPT_ATTRIBUTES_INFORMATION);
+                }
+                else {
+                    PVOLUME_GET_GPT_ATTRIBUTES_INFORMATION gpt_attrib;
+
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(VOLUME_GET_GPT_ATTRIBUTES_INFORMATION), &gpt_attrib, &size);
+                    if (NT_SUCCESS(status)) {
+                        gpt_attrib = 0;
+                        status = STATUS_SUCCESS;
+                        info = sizeof(VOLUME_GET_GPT_ATTRIBUTES_INFORMATION);
+                    }
+                }
+            }
+            break;
+        //取得這個Volume到底包含哪幾個Disk上的SectorRange聯合而成？
         case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:
+            {
+                PVOLUME_DISK_EXTENTS disk_exts;
+                if (OutputBufferLength < sizeof(VOLUME_DISK_EXTENTS)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(VOLUME_DISK_EXTENTS);
+                    KdPrint(("VirtVol IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS returning STATUS_BUFFER_TOO_SMALL\n"));
+                    break;
+                }
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(VOLUME_DISK_EXTENTS), &disk_exts, &size);
+                if (NT_SUCCESS(status)) {
+                    disk_exts->NumberOfDiskExtents = 1;
+                    disk_exts->Extents[0].DiskNumber = devext->StorageNumber;
+                    disk_exts->Extents[0].StartingOffset.QuadPart = 0;
+                    disk_exts->Extents[0].ExtentLength.QuadPart = devext->DiskSize.QuadPart;
+                    status = STATUS_SUCCESS;
+                    info = sizeof(VOLUME_DISK_EXTENTS);
+                }
+            }
+            break;
+
+        //optional. MountMgr會來問Volume "你建議要把volume mount在哪一槽？"
+        //如果volume設計成 auto-mount 就不需要這個，這種情形下mountmgr不會來問
         case IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME:
+            status = STATUS_INVALID_DEVICE_REQUEST;
+            info = 0;
+            break;
+        // mountmgr 會來問這個Device的 GUID，後續操作以此GUID為DeviceInterface
+        //Volume Interface GUID好像要用 GUID_DEVINTERFACE_VOLUME 去向系統取得？
         case IOCTL_MOUNTDEV_QUERY_UNIQUE_ID:
+            // Set the volume Unique ID to the symbolic link GUID that was returned when the driver registered
+            // a GUID_DEVINTERFACE_VOLUME device interface (see the RegisterInterface function)
+            {
+                PMOUNTDEV_UNIQUE_ID uniqueId = NULL;
+                status = STATUS_SUCCESS;
+                if (!devext->DeviceInterfaceSymbolicLink.Buffer) 
+                {
+                    info = 0;
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+                if (OutputBufferLength < sizeof(MOUNTDEV_UNIQUE_ID)) 
+                {
+                    info = sizeof(MOUNTDEV_UNIQUE_ID);
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    break;
+                }
+                status = WdfRequestRetrieveOutputBuffer(Request, sizeof(MOUNTDEV_UNIQUE_ID), &uniqueId, NULL);
+                if (NT_SUCCESS(status)) 
+                {
+                    RtlZeroMemory(uniqueId, sizeof(MOUNTDEV_UNIQUE_ID));
+                    //GUID_DEVINTERFACE_VOLUME;
+                    uniqueId->UniqueIdLength = devext->DeviceInterfaceSymbolicLink.Length;
+                    if (OutputBufferLength < (sizeof(USHORT) + devext->DeviceInterfaceSymbolicLink.Length)) 
+                    {
+                        info = sizeof(MOUNTDEV_UNIQUE_ID);
+                        status = STATUS_BUFFER_OVERFLOW;
+                        break;
+                    }
+                    RtlCopyMemory(uniqueId->UniqueId, devExt->DeviceInterfaceSymbolicLink.Buffer, uniqueId->UniqueIdLength);
+                    info = sizeof(USHORT) + uniqueId->UniqueIdLength;
+                    status = STATUS_SUCCESS;
+                }
+            }
+            break;
         case IOCTL_STORAGE_GET_HOTPLUG_INFO:
-
-            //
-            // Return status success
-            //
-
-            //status = STATUS_SUCCESS;
+            {
+                if (OutputBufferLength < sizeof(STORAGE_HOTPLUG_INFO)) 
+                {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    info = sizeof(STORAGE_HOTPLUG_INFO);
+                    break;
+                }
+                else 
+                {
+                    PSTORAGE_HOTPLUG_INFO info = NULL;
+                    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(STORAGE_HOTPLUG_INFO), &info, &size);
+                    if (NT_SUCCESS(status)) 
+                    {
+                        *info = devext->HotPlugInfo;
+                        status = STATUS_SUCCESS;
+                        info = sizeof(STORAGE_HOTPLUG_INFO);
+                    }
+                }
+            }
             break;
     }
 
