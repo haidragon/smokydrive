@@ -397,7 +397,7 @@ Return Value:
                         status = STATUS_BUFFER_OVERFLOW;
                         break;
                     }
-                    RtlCopyMemory(uniqueId->UniqueId, devExt->DeviceInterfaceSymbolicLink.Buffer, uniqueId->UniqueIdLength);
+                    RtlCopyMemory(uniqueId->UniqueId, devext->DeviceInterfaceSymbolicLink.Buffer, uniqueId->UniqueIdLength);
                     info = sizeof(USHORT) + uniqueId->UniqueIdLength;
                     status = STATUS_SUCCESS;
                 }

@@ -72,9 +72,13 @@ RamDiskDriverCreateDevice(
     if (!NT_SUCCESS(status))
         KdPrint(("InitDeviceExtension() failed 0x%08X", status));
 
-    status = WdfDeviceCreateSymbolicLink(device, &devext->SymbolicLink);
+    status = RegisterInterface(device);
     if (!NT_SUCCESS(status))
-        KdPrint(("WdfDeviceCreateSymbolicLink() failed 0x%08X", status));
+        KdPrint(("RegisterInterface() failed 0x%08X", status));
+
+    //status = WdfDeviceCreateSymbolicLink(device, &devext->SymbolicLink);
+    //if (!NT_SUCCESS(status))
+    //    KdPrint(("WdfDeviceCreateSymbolicLink() failed 0x%08X", status));
 
     return status;
 }

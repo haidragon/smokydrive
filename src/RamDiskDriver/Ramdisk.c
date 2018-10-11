@@ -56,12 +56,12 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     }
     devext->DiskSize.QuadPart = setting.DiskSize.QuadPart;
     RtlCopyMemory(&devext->Geometry, &setting.Geometry, sizeof(DISK_GEOMETRY));
-    devext->SymbolicLink.Buffer = devext->SymLinkBuffer;
-    devext->SymbolicLink.MaximumLength = sizeof(devext->SymLinkBuffer);
+    //devext->SymbolicLink.Buffer = devext->SymLinkBuffer;
+    //devext->SymbolicLink.MaximumLength = sizeof(devext->SymLinkBuffer);
 
-    USHORT str_size = (USHORT)wcslen(DOS_DEVICE_NAME)*sizeof(WCHAR);
-    RtlCopyMemory(devext->SymLinkBuffer, DOS_DEVICE_NAME, str_size);
-    devext->SymbolicLink.Length = str_size;
+    //USHORT str_size = (USHORT)wcslen(DOS_DEVICE_NAME)*sizeof(WCHAR);
+    //RtlCopyMemory(devext->SymLinkBuffer, DOS_DEVICE_NAME, str_size);
+    //devext->SymbolicLink.Length = str_size;
     
     ExUuidCreate(&devext->DeviceGUID);
     devext->HotPlugInfo.Size = sizeof(STORAGE_HOTPLUG_INFO);
@@ -69,7 +69,46 @@ NTSTATUS InitDeviceExtension(PDEVICE_EXTENSION devext)
     devext->HotPlugInfo.MediaHotplug = TRUE;
     devext->HotPlugInfo.MediaRemovable = TRUE;
     devext->HotPlugInfo.WriteCacheEnableOverride = FALSE;   //cache policy無法在DeviceManager頁面修改
+
+
     return status;
+}
+
+NTSTATUS RegisterInterface(IN WDFDEVICE dev)
+{
+    NTSTATUS status = 0;
+    LPGUID guid = (LPGUID)&GUID_DEVINTERFACE_VOLUME;
+    //查詢DEVICE INTERFACE SYMBOLIC LINK (GUID) 並存在 non paged pool
+    UNICODE_STRING link;
+    WDFSTRING  str_handle;
+
+    status = WdfDeviceCreateDeviceInterface(dev, guid, NULL);
+
+    if (NT_SUCCESS(status)) 
+    {
+        // Retrieve the symbolic link name (a GUID) that the system assigned to the device interface registered for the VirtVol device
+        // and save it in the device extension for later use
+        status = WdfStringCreate(NULL, WDF_NO_OBJECT_ATTRIBUTES, &str_handle);
+        if (!NT_SUCCESS(status))
+            return status;
+
+        status = WdfDeviceRetrieveDeviceInterfaceString(dev, guid, NULL, str_handle);
+        if (!NT_SUCCESS(status))
+            return status;
+        PDEVICE_EXTENSION devext = DeviceGetExtension(dev);
+
+        WdfStringGetUnicodeString(str_handle, &link);
+        devext->DeviceInterfaceSymbolicLink.MaximumLength = link.Length + sizeof(UNICODE_NULL);
+        devext->DeviceInterfaceSymbolicLink.Length = link.Length;
+        devext->DeviceInterfaceSymbolicLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, devext->DeviceInterfaceSymbolicLink.MaximumLength, MY_POOLTAG);
+
+        if (NULL == devext->DeviceInterfaceSymbolicLink.Buffer)
+            return STATUS_INSUFFICIENT_RESOURCES;
+
+        RtlCopyUnicodeString(&devext->DeviceInterfaceSymbolicLink, &link);
+        // Enable the device interface registered for the virtvol device
+        WdfDeviceSetDeviceInterfaceState(dev, guid, NULL, TRUE);
+    }
 }
 
 void LoadSetting(PSMOKYDISK_SETTING setting)

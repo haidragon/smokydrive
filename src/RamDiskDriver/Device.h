@@ -44,6 +44,7 @@ typedef struct _DEVICE_EXTENSION
     GUID                DeviceGUID;
     UNICODE_STRING      SymbolicLink;               // Dos symbolic name; Drive letter
     WCHAR               SymLinkBuffer[SYMLINK_BUFFER_SIZE];
+    UNICODE_STRING      DeviceInterfaceSymbolicLink;
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 //
